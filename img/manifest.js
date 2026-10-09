@@ -1,0 +1,2 @@
+// 由 build-img.py 生成，不要手改
+window.IMG = {"frog":"img/frog.png","giraffe":"img/giraffe.png","flamingo":"img/flamingo.png","dog":"img/dog.png","starfish":"img/starfish.png","crocodile":"img/crocodile.png","cat":"img/cat.png","hero":"img/hero.jpg","card-bg":"img/card-bg.jpg","tip-clear":"img/tip-clear.jpg","tip-clothes":"img/tip-clothes.jpg","tip-adult":"img/tip-adult.jpg","tip-window":"img/tip-window.jpg"};
