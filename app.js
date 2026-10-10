@@ -231,6 +231,7 @@ async function loadLandmarker() {
         runningMode: 'VIDEO', numPoses: 1,
         minPoseDetectionConfidence: 0.4, minPosePresenceConfidence: 0.4, minTrackingConfidence: 0.4,
       });
+      if (window.__forceCPU) return mk('CPU'); // 测试用：无头浏览器的 GPU（SwiftShader）会偶发卡死
       try { return await mk('GPU'); } catch { return await mk('CPU'); }
     })();
     landmarkerPromise.catch(() => { landmarkerPromise = null; }); // 下次进来可再试
@@ -258,8 +259,8 @@ function renderTemplate(id, place = null) {
     svg.setAttribute('viewBox', `0 0 ${vw} ${vh}`); svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     place.ground = true;
     // 地平线：人像的脚踩在这条线上。学生要转动手机角度，让这条线对齐真实的地板（脚会站的地方）
-    const gy = box.y1 * vh, fs = Math.round(vh * 0.03);
-    const ground = `<g class="ground"><rect x="0" y="${gy}" width="${vw}" height="${vh - gy}" fill="rgba(244,182,63,.2)"/><line x1="0" y1="${gy}" x2="${vw}" y2="${gy}" stroke="rgba(8,22,14,.6)" stroke-width="${fs * 0.5}"/><line x1="0" y1="${gy}" x2="${vw}" y2="${gy}" stroke="#F4B63F" stroke-width="${fs * 0.28}" stroke-dasharray="${fs} ${fs * 0.6}"/><text x="${vw / 2}" y="${gy + fs * 1.5}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#fff" stroke="rgba(8,22,14,.8)" stroke-width="${fs * 0.22}" paint-order="stroke" font-family="'Noto Sans SC',sans-serif">地板（地平线）</text></g>`;
+    const gy = box.y1 * vh, lf = Math.round(vh * 0.03), fs = place.fs || lf;
+    const ground = `<g class="ground"><rect x="0" y="${gy}" width="${vw}" height="${vh - gy}" fill="rgba(244,182,63,.2)"/><line x1="0" y1="${gy}" x2="${vw}" y2="${gy}" stroke="rgba(8,22,14,.6)" stroke-width="${lf * 0.5}"/><line x1="0" y1="${gy}" x2="${vw}" y2="${gy}" stroke="#F4B63F" stroke-width="${lf * 0.28}" stroke-dasharray="${lf} ${lf * 0.6}"/><text x="${vw / 2}" y="${gy + fs * 1.5}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#fff" stroke="rgba(8,22,14,.8)" stroke-width="${fs * 0.22}" paint-order="stroke" font-family="'Noto Sans SC',sans-serif">地板（地平线）</text></g>`;
     inner = `<g transform="translate(${(box.x0 * vw - 30 * k).toFixed(1)} ${(box.y0 * vh - 30 * k).toFixed(1)}) scale(${k.toFixed(4)})">${inner}</g>` + ground;
   } else { svg.setAttribute('viewBox', '0 0 360 480'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); }
   svg.innerHTML = inner;
@@ -267,11 +268,13 @@ function renderTemplate(id, place = null) {
 }
 
 function setRing(p) { $('#ring-fg').style.strokeDashoffset = String(100 - Math.max(0, Math.min(1, p)) * 100); }
+// 画面上的提示药丸只放短句（单行小字）；完整句子由语音念。
+const SHORT_HINT = { [HINTS.none]: '站进人像里', [HINTS.closer]: '再往前一点', [FAR_HINT]: '再退后一点', [HINTS.shootOk]: '对了！稳住' };
 function setHint(text, good = false, sub = '') {
   const h = $('#cam-hint');
   if (!text) { h.hidden = true; return; }
-  h.hidden = false; h.textContent = text; h.classList.toggle('good', good);
-  if (sub) { const s = document.createElement('small'); s.textContent = sub; h.appendChild(s); }
+  h.hidden = false; h.textContent = SHORT_HINT[text] || text; h.classList.toggle('good', good);
+  if (sub && matchMedia('(min-width: 701px)').matches) { const s = document.createElement('small'); s.textContent = sub; h.appendChild(s); }
 }
 
 async function enterCam(id) {
@@ -366,13 +369,15 @@ function resetCamUi() {
 /* ═════════ 3b 站位检查：屏幕上一个人像，学生站进去就 OK ═════════ */
 function renderPosSilhouette() {
   const v = $('#video'), vw = v.videoWidth || 720, vh = v.videoHeight || 1280;
-  renderTemplate('starfish', { vw, vh, box: silhouetteBox(vw, vh) });
+  // 地平线标签在手机上约 13px：换算成视频像素
+  const stW = $('#stage').clientWidth, fs = stW && matchMedia('(max-width: 700px)').matches ? Math.round(13 / Math.max(stW / vw, 0.01)) : 0;
+  renderTemplate('starfish', { vw, vh, box: silhouetteBox(vw, vh), fs });
 }
 async function enterPosition(from) {
   S.posFrom = from; cam.view = 'pos'; cam.mode = 'pose'; resetCamUi();
   cam.progress = 0; cam.lastT = 0; setRing(0); setHint('');
   $('#cam-ico').innerHTML = art('starfish'); $('#ring-ico').innerHTML = art('starfish');
-  $('#cam-zh').textContent = '站位检查'; $('#cam-ms').textContent = '站进人像里'; $('#cam-desc').textContent = '先转动手机角度，让人像的脚踩在地板上；再站进人像里面。'; $('#pos-tip').hidden = false;
+  $('#cam-zh').textContent = '站位检查'; $('#cam-ms').textContent = '站进人像里'; $('#cam-desc').textContent = '先转动手机角度，让人像的脚踩在地板上；再站进人像里面。'; $('#pos-tip').hidden = false; $('#pos-tip').classList.remove('fade');
   renderPosSilhouette();
   // 一直站不进去也不会卡住：8 秒后出现「我站好了」
   $('#timer-label').textContent = '我站好了';
@@ -383,7 +388,7 @@ async function enterPosition(from) {
 }
 function posDone() { // 站进人像了
   cam.capturing = true; if (cam.raf) cancelAnimationFrame(cam.raf); cam.raf = 0; clearTimeout(cam.posBtnTimer);
-  setHint(''); $('#tpl').classList.remove('ok'); $('#pos-guide').hidden = true; $('#pos-ok').hidden = false; $('#big').hidden = true; Ann.reset();
+  $('#pos-tip').classList.add('fade'); setHint(''); $('#tpl').classList.remove('ok'); $('#pos-guide').hidden = true; $('#pos-ok').hidden = false; $('#big').hidden = true; Ann.reset();
   Sound.good(); Voice.say(SAY.posOk());
   cam.autoGo = setTimeout(posGo, 6500); // 不用再点：说完就进列表（也可以按「开始挑战」）
 }
@@ -402,6 +407,7 @@ $('#btn-pos-go').addEventListener('click', posGo);
 $('#btn-pos-ready').addEventListener('click', posDone);
 
 async function startCamera() {
+  requestAnimationFrame(fitInsets);
   stopCamera();
   const tok = ++cam.token;
   cam.capturing = false; cam.progress = 0; cam.smoother.reset(); cam.posSm.reset(); Ann.reset(); cam.frames = []; cam.slowSince = 0;
@@ -849,7 +855,18 @@ function fitStage() {
   const v = $('#video'), st = v.closest('.stage');
   if (st && v.videoWidth && v.videoHeight) st.style.setProperty('--arn', String(v.videoWidth / v.videoHeight));
   if (cam.view === 'pos' && v.videoWidth) renderPosSilhouette();
+  requestAnimationFrame(fitInsets);
 }
+// 手机上顶部条、底部列叠在画面上：算出提示药丸、横幅要离画面边缘多远，才不被它们盖住
+function fitInsets() {
+  const st = $('#stage'); if (!st || !matchMedia('(max-width: 700px)').matches) return;
+  const r = st.getBoundingClientRect(); if (!r.height) return;
+  const bar = $('.cam-bottom'), top = $('.cam-top');
+  const gapB = innerHeight - r.bottom, gapT = r.top;
+  st.style.setProperty('--hb', `${Math.max(10, (bar ? bar.offsetHeight : 76) - gapB + 6)}px`);
+  st.style.setProperty('--ht', `${Math.max(8, (top ? top.offsetHeight : 56) - gapT + 6)}px`);
+}
+addEventListener('resize', () => requestAnimationFrame(fitInsets));
 // iOS 会在开流后才把画面转成直式（video 触发 resize），所以两个事件都要跟。
 $('#video').addEventListener('loadedmetadata', fitStage);
 $('#video').addEventListener('resize', fitStage);
