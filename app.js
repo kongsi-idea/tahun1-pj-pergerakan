@@ -1,4 +1,4 @@
-// 动作打卡 v2 · 马来西亚雨林 · Pendidikan Jasmani Tahun 1
+// 动物模仿秀 v2 · 马来西亚雨林 · Pendidikan Jasmani Tahun 1
 // 隐私：摄像头画面只在本机处理——video 只挂在本地 <video>，姿态推理在浏览器内跑，
 // 拍好的照片只存在这个分页的内存里；整个程序没有任何 fetch/上传影像的动作。
 import { ANIMALS, TEMPLATES, classify, checkPosition, silhouetteBox, createPosSmoother, arrowDir, HINTS, POS, POS_HOLD_MS, createSmoother, FAR_HINT } from './js/poses.js';
@@ -122,7 +122,7 @@ const ART = {};
 function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
 async function preloadArt() { await Promise.allSettled(Object.entries(IMGMAP).map(async ([k, v]) => { ART[k] = await loadImg(v); })); }
 async function ensureFonts() {
-  const zh = ANIMALS.map((a) => a.zh).join('') + '动作打卡完成未倒数拍做得好' + S.name + S.cls;
+  const zh = ANIMALS.map((a) => a.zh).join('') + '动物模仿秀完成未倒数拍做得好' + S.name + S.cls;
   const jobs = [document.fonts.load("400 40px 'LXGW WenKai Screen'", zh), document.fonts.load("italic 500 24px Fraunces", ANIMALS.map((a) => a.ms).join('')), document.fonts.load("800 30px 'Noto Sans SC'", zh)];
   try { await Promise.race([Promise.allSettled(jobs), wait(4000)]); } catch { /* 用系统字 */ }
 }
@@ -764,7 +764,7 @@ async function buildCard() {
   for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.moveTo(-440, -96 + i * 25); ctx.bezierCurveTo(-200, -102 + i * 25, 200, -88 + i * 25, 440, -98 + i * 25); ctx.stroke(); }
   ctx.strokeStyle = 'rgba(243,241,230,.35)'; ctx.lineWidth = 3; roundRect(ctx, -446, -104, 892, 208, 20); ctx.stroke();
   ctx.fillStyle = C.mist; ctx.font = `400 92px ${F_KAI}`; ctx.shadowColor = 'rgba(30,14,2,.6)'; ctx.shadowOffsetY = 4; ctx.shadowBlur = 2;
-  ctx.fillText('动作打卡', -90, -34); ctx.shadowColor = 'transparent';
+  ctx.fillText('动物模仿秀', -90, -34); ctx.shadowColor = 'transparent';
   ctx.font = `800 46px ${F_SANS}`; ctx.fillStyle = '#FFE9A8'; fitText(ctx, S.name + (S.cls ? `　${S.cls}` : ''), -90, 52, 640);
   ctx.font = `600 28px ${F_SANS}`; ctx.fillStyle = C.mist; ctx.fillText(fmtDate(), -90, 98);
   // 完成章（扶桑花红）
@@ -819,14 +819,14 @@ async function buildCard() {
   setupShare();
 }
 
-function cardFile() { return new File([cardBlob], `PJ-动作打卡-${safe(S.name)}-${ymd()}.jpg`, { type: 'image/jpeg' }); }
+function cardFile() { return new File([cardBlob], `PJ-动物模仿秀-${safe(S.name)}-${ymd()}.jpg`, { type: 'image/jpeg' }); }
 function setupShare() {
   let canShare = false;
   try { canShare = !!(navigator.canShare && cardBlob && navigator.canShare({ files: [cardFile()] })); } catch { canShare = false; }
   $('#btn-share').hidden = !canShare;
 }
 $('#btn-share').addEventListener('click', async () => {
-  try { await navigator.share({ files: [cardFile()], title: '动作打卡', text: `${S.name} 的动作打卡卡` }); showDone(); }
+  try { await navigator.share({ files: [cardFile()], title: '动物模仿秀', text: `${S.name} 的动物模仿秀打卡卡` }); showDone(); }
   catch (e) { if (e && e.name !== 'AbortError') toast('分享没有成功，请改用「存到手机」'); }
 });
 $('#btn-download').addEventListener('click', () => {

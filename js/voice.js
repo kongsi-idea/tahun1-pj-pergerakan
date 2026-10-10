@@ -15,7 +15,7 @@ export function clipKey(voice, text) {
 }
 
 export const SAY = {
-  welcome: () => '你好！我们来玩动作打卡。先写上你的名字，再按开始。',
+  welcome: () => '你好！我们来玩动物模仿秀。先写上你的名字，再按开始。',
   intro: (a) => `把手机立在桌上，往后退，让全身都在框里。${a.desc}`,
   intro2: (a) => `站到拖鞋记号上。${a.desc}`,
   desc: (a) => a.desc,
