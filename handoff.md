@@ -1,7 +1,8 @@
 # 动物模仿秀 · 交接
 
 ## ⏯️ 目前做到哪
-2026-10-10 v1.0 上线：https://tahun1-pj-haiwan.vercel.app ，Hub 已登记（封面由 cx 生成，另有老师的 4 张横式截图），`npm run check -- tahun1-pj-haiwan` 全过。
+2026-10-10 v1.0.3 上线（Hub 同步，`npm run check` 全过）。老师 iPhone 实测后连修三轮：v1.0.1 直拿时镜头改开直式画面（依序试 `CAM_TRIES`）；v1.0.2 手机拍照画面让镜头占满屏，上下控制列变薄叠在画面上，字缩小；v1.0.3 每次开镜头换新的 `<video>`（iPhone 进动作后画面缩小，老师已确认修好），拍照以人的位置裁切（`personBox`，地上的动作不再被裁掉）。
+老师 10-10 决定：镜头放大 1.5x、趴下动作改成头朝手机，**都先不做**，用一阵子再说（放大会让人得退更远）。
 
 ## 🚦 目前状态
 - 可运行。流程：欢迎（名字、安全提示）→ 动作教学 → 站位检查（站进人像＋拖鞋记号）→ 7 只动物 → 雨林打卡卡 → 完成画面。
@@ -19,4 +20,4 @@
 - 本机测试：8791 留给老师，自动测试用 8792。
 
 ## 🕐 最后更新
-2026-10-10 · Claude Code (Opus 5.5) @ yquanloo 的 Mac · Git：✅ 已推
+2026-10-10 · Claude Code (Opus 5.5) @ yquanloo 的 Mac · Git：✅ 已推（⚠️ 本机 iCloud 资料夹落后 GitHub：v1.0.1 之后的 commit 是在 scratchpad 复制里推的，本机要先 `git pull`；该资料夹常被 iCloud 收回云端变 dataless，读写会卡住，建议 Finder 对 my-projects「保留下载」）
