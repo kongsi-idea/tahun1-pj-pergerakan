@@ -331,7 +331,7 @@ function dbgUpdate(lm, video, now, res, extraFps) {
   if (!DEBUG) return;
   let pre = $('#dbg'); if (!pre) { pre = document.createElement('pre'); pre.id = 'dbg'; document.body.appendChild(pre); }
   const v = (i) => (lm && lm[i] ? (lm[i].visibility ?? 1) : 0);
-  const L = [`${cam.view === 'pos' ? `站位 step ${cam.posStep}` : `拍照 ${S.cur}`}  视频 ${video.videoWidth}x${video.videoHeight}  检测fps ${extraFps.toFixed(1)}`,
+  const L = [`${cam.view === 'pos' ? `站位 step ${cam.posStep}` : `拍照 ${S.cur}`}  视频 ${video.videoWidth}x${video.videoHeight}（${cam.camTry || ''}）  检测fps ${extraFps.toFixed(1)}`,
     `vis(阈值 拍照${'0.4'}/站位${POS.VIS})  鼻 ${f2(v(0))}  肩 ${f2(v(11))}/${f2(v(12))}`,
     `  腕 ${f2(v(15))}/${f2(v(16))}  髋 ${f2(v(23))}/${f2(v(24))}  踝 ${f2(v(27))}/${f2(v(28))}`];
   const d = res && res.diag;
@@ -410,7 +410,7 @@ async function startCamera() {
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no-getUserMedia');
     // facingMode:'user' 前置镜头；画面 CSS 镜像显示（像照镜子）
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } }, audio: false });
+    stream = await openFrontCamera($('#video'), tok);
   } catch (err) {
     if (tok === cam.token) { loading.hidden = true; showCamError(err); }
     return;
@@ -418,9 +418,8 @@ async function startCamera() {
   if (tok !== cam.token) { stream.getTracks().forEach((t) => t.stop()); return; }
   cam.stream = cam.lastStream = stream;
   const video = $('#video');
-  video.srcObject = stream;
-  try { await video.play(); } catch { /* autoplay 被挡时仍会显示第一帧 */ }
   if (tok !== cam.token) return;
+  fitStage();
   if (cam.view === 'pos') renderPosSilhouette(); // 视频真实尺寸出来了，人像对齐
   loading.textContent = '正在准备动作侦测…（第一次要等一下）';
   try {
@@ -846,7 +845,43 @@ show('welcome');
 
 // 画面比例跟着真实镜头走：笔电是横向镜头，若硬裁成直式会只显示中间一窄条，
 // 而站位／动作判定用的是整个画面，学生看到的和系统判定的就对不上。照片仍在拍照时另裁 3:4。
-$('#video').addEventListener('loadedmetadata', (e) => {
-  const v = e.target, st = v.closest('.stage');
+function fitStage() {
+  const v = $('#video'), st = v.closest('.stage');
   if (st && v.videoWidth && v.videoHeight) st.style.setProperty('--arn', String(v.videoWidth / v.videoHeight));
-});
+  if (cam.view === 'pos' && v.videoWidth) renderPosSilhouette();
+}
+// iOS 会在开流后才把画面转成直式（video 触发 resize），所以两个事件都要跟。
+$('#video').addEventListener('loadedmetadata', fitStage);
+$('#video').addEventListener('resize', fitStage);
+
+// 手机直拿时要直式画面（看得到更多上下空间）。各浏览器对 width/height 的解读不同：
+// iPhone 直拿时，要 1280×720 反而会给直式 720×1280；要 720×1280 却给横式（2026-10-10 老师 iPhone 实测）。
+// 所以依序试，拿到的方向跟屏幕方向一致就用；都不一致就用最后一个。
+const CAM_TRIES = [
+  { width: { ideal: 1280 }, height: { ideal: 720 } },
+  { width: { ideal: 720 }, height: { ideal: 1280 } },
+  { aspectRatio: { ideal: 3 / 4 } },
+];
+function waitDims(video) {
+  return new Promise((res) => {
+    if (video.videoWidth) return res();
+    const done = () => { video.removeEventListener('loadedmetadata', done); clearTimeout(t); res(); };
+    const t = setTimeout(done, 2000);
+    video.addEventListener('loadedmetadata', done);
+  });
+}
+async function openFrontCamera(video, tok) {
+  const wantPortrait = innerHeight > innerWidth;
+  for (let i = 0; i < CAM_TRIES.length; i++) {
+    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', ...CAM_TRIES[i] }, audio: false });
+    video.srcObject = s;
+    // play() 在背景分页可能永远不 resolve，最多等 1.5 秒
+    await Promise.race([video.play().catch(() => {}), new Promise((r) => setTimeout(r, 1500))]);
+    await waitDims(video);
+    await new Promise((r) => setTimeout(r, 150)); // 让 iOS 的旋转（resize）先发生
+    cam.camTry = `试${i + 1}：${video.videoWidth}×${video.videoHeight}`;
+    const isPortrait = video.videoHeight > video.videoWidth;
+    if (isPortrait === wantPortrait || i === CAM_TRIES.length - 1 || tok !== cam.token) return s;
+    s.getTracks().forEach((t) => t.stop());
+  }
+}
