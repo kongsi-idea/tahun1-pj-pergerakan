@@ -416,7 +416,7 @@ async function startCamera() {
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no-getUserMedia');
     // facingMode:'user' 前置镜头；画面 CSS 镜像显示（像照镜子）
-    stream = await openFrontCamera($('#video'), tok);
+    stream = await openFrontCamera(freshVideo(), tok);
   } catch (err) {
     if (tok === cam.token) { loading.hidden = true; showCamError(err); }
     return;
@@ -870,6 +870,17 @@ addEventListener('resize', () => requestAnimationFrame(fitInsets));
 // iOS 会在开流后才把画面转成直式（video 触发 resize），所以两个事件都要跟。
 $('#video').addEventListener('loadedmetadata', fitStage);
 $('#video').addEventListener('resize', fitStage);
+// iPhone Safari：同一个 <video> 关掉再接上新镜头后，有时不再撑满 .stage（老师 iPhone 实测：站位检查满屏，
+// 进动作后画面缩成中间一小块）。每次开镜头都换一个全新的 video 元素，避开 Safari 留下的旧版面状态。
+// 这是依症状推测的修法，Chromium 重现不出来，要 iPhone 实测确认。
+function freshVideo() {
+  const old = $('#video'), v = old.cloneNode(false);
+  v.removeAttribute('src'); v.muted = true; v.playsInline = true;
+  old.replaceWith(v);
+  v.addEventListener('loadedmetadata', fitStage);
+  v.addEventListener('resize', fitStage);
+  return v;
+}
 
 // 手机直拿时要直式画面（看得到更多上下空间）。各浏览器对 width/height 的解读不同：
 // iPhone 直拿时，要 1280×720 反而会给直式 720×1280；要 720×1280 却给横式（2026-10-10 老师 iPhone 实测）。
