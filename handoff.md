@@ -20,4 +20,4 @@
 - 本机测试：8791 留给老师，自动测试用 8792。
 
 ## 🕐 最后更新
-2026-10-10 · Claude Code (Opus 5.5) @ yquanloo 的 Mac · Git：✅ 已推（⚠️ 本机 iCloud 资料夹落后 GitHub：v1.0.1 之后的 commit 是在 scratchpad 复制里推的，本机要先 `git pull`；该资料夹常被 iCloud 收回云端变 dataless，读写会卡住，建议 Finder 对 my-projects「保留下载」）
+2026-10-10 · Claude Code (Opus 5.5) @ yquanloo 的 Mac · Git：✅ 已推（本机已 `git pull` 同步到最新；`my-projects` 常被 iCloud 收回云端变 dataless，读写会卡住，建议 Finder 对它「保留下载」，卡住时改从 GitHub clone 到 scratchpad 做）
