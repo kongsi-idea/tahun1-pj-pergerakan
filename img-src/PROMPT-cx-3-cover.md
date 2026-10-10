@@ -5,10 +5,10 @@ A cover image for a children's home-exercise web app. Soft 3D clay diorama style
 Palette: deep forest green #16362A, moss green, mango yellow #F4B63F, hibiscus red #D9483B, misty cream #F3F1E6.
 
 ## 文字（只放这些字，逐字照写）
-- 大标题（上方 1/3 的中间，最大、最醒目，奶油白字加深绿描边或放在一块木牌上）：动物模仿秀
+- 大标题（上方 1/3 的中间，最大、最醒目，奶油白字加深绿描边或放在一块木牌上）：动作打卡
 - 标题下方一行小字（大约标题的 1/3 大小）：一年级 · 体育
 - 不要加任何其他文字、英文、logo、徽章或水印。
-Every Chinese character must be a correct, well-formed simplified Chinese glyph — no invented, broken or garbled characters. The title must read exactly 动物模仿秀 and the subtitle exactly 一年级 · 体育.
+Every Chinese character must be a correct, well-formed simplified Chinese glyph — no invented, broken or garbled characters. The title must read exactly 动作打卡 and the subtitle exactly 一年级 · 体育.
 
 ## 构图注意
 这张图会被裁成 4:3 当卡片封面：左右各约 6% 只放叶子背景，标题和所有动物都要在中间安全区内。

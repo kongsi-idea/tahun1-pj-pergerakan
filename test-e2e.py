@@ -1,6 +1,6 @@
-"""动物模仿秀 端到端：欢迎页→列表→拍照画面→forcePass→确认→打卡卡；另测倒数拍、摄像头释放。
+"""动作打卡 端到端：欢迎页→列表→拍照画面→forcePass→确认→打卡卡；另测倒数拍、摄像头释放。
 用法：先开 `python3 -m http.server 8791 --bind 127.0.0.1`，再跑 `python3 test-e2e.py`。
-手机直立 390×844、横屏 1366×768 各跑一次。截图存 ~/Documents/my-agent/playwright-to-delete/pj-haiwan-*.png"""
+手机直立 390×844、横屏 1366×768 各跑一次。截图存 ~/Documents/my-agent/playwright-to-delete/pj-pergerakan1-*.png"""
 import os, sys
 from playwright.sync_api import sync_playwright
 
@@ -29,11 +29,11 @@ def run(p, w, h, tag):
             errs.append(t)
     page.on('console', on_console)
     page.on('pageerror', lambda e: errs.append('pageerror: ' + str(e)))
-    shot = lambda n: page.screenshot(path=f'{OUT}/pj-haiwan-{tag}-{n}.png')
+    shot = lambda n: page.screenshot(path=f'{OUT}/pj-pergerakan1-{tag}-{n}.png')
 
     page.goto(URL); page.wait_for_function('() => window.__pj')
-    check('标题', '动物模仿秀' in page.title() and 'Pendidikan Jasmani Tahun 1' in page.title())
-    check('track-use 脚本', page.locator('script[data-slug="tahun1-pj-haiwan"]').count() == 1)
+    check('标题', '动作打卡' in page.title() and 'Pendidikan Jasmani Tahun 1' in page.title())
+    check('track-use 脚本', page.locator('script[data-slug="tahun1-pj-pergerakan"]').count() == 1)
     check('4 条安全提示', page.locator('.safety li').count() == 4)
     import re
     emoji = re.compile('[\U0001F300-\U0001FAFF\u2600-\u27BF\u23F1\u2B50]')
@@ -175,7 +175,7 @@ def run(p, w, h, tag):
     with page.expect_download() as dl:
         page.click('#btn-download')
     fn = dl.value.suggested_filename
-    check('下载文件名', fn.startswith('PJ-动物模仿秀-测试同学-') and fn.endswith('.jpg'), fn)
+    check('下载文件名', fn.startswith('PJ-动作打卡-测试同学-') and fn.endswith('.jpg'), fn)
     shot('5-card')
     # 完成画面（下载后自动出现）
     page.wait_for_selector('#s-done', state='visible', timeout=5000)
@@ -214,7 +214,7 @@ def run(p, w, h, tag):
         txt = p2.inner_text('#dbg')
         check('?debug=1 出现诊断面板（含 visibility/分辨率/fps/检查项）', '视频' in txt and 'vis' in txt and 'fps' in txt and '人像框' in txt, txt[:60].replace('\n', ' '))
         check('?debug=1 画布显示', p2.locator('#dbgc').is_visible())
-        p2.screenshot(path=f'{OUT}/pj-haiwan-{tag}-1d-debug.png')
+        p2.screenshot(path=f'{OUT}/pj-pergerakan1-{tag}-1d-debug.png')
         p2.evaluate("() => { document.querySelector('#cam-back').click(); }")
         p2.close()
     try:

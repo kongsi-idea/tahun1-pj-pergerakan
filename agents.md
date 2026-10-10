@@ -1,7 +1,7 @@
-# 动物模仿秀（tahun1-pj-haiwan）· 专案蓝图
+# 动作打卡（tahun1-pj-pergerakan）· 专案蓝图
 
 一年级体育居家动作打卡：烟霾停课时，学生在家用手机前置镜头做动作。MediaPipe 侦测身体骨架，动作做对并撑住就自动拍照，最后拼成一张打卡卡，可分享到 Classroom／WhatsApp。纯静态单页，不需要 build。
-正式网址 https://tahun1-pj-haiwan.vercel.app （push 到 main 就由 GitHub Actions 自动部署）。
+正式网址 https://tahun1-pj-pergerakan.vercel.app （push 到 main 就由 GitHub Actions 自动部署）。
 
 ## 路线图
 - [x] v1.0 上线（2026-10-10）：动作教学 → 站位检查 → 7 个动物动作 → 雨林打卡卡 → 完成画面；Hub 已登记

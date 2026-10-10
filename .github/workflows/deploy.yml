@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: team_v1qC6zXVcHHvI99nEZGuFCkF
-      VERCEL_PROJECT_ID: prj_ptkutZBOqRfHLLzv8fOi3ouSxAZj
+      VERCEL_PROJECT_ID: prj_63M0pWiJkb625NEHq0fgH5v6a5Ur
     steps:
       - uses: actions/checkout@v4
       - run: npx --yes vercel@56 deploy --prod --yes --token "${{ secrets.VERCEL_TOKEN }}"
