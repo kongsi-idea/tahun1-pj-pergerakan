@@ -6,7 +6,18 @@ import { Voice, SAY, allVoiceLines } from './js/voice.js';
 
 const $ = (s) => document.querySelector(s);
 const byId = (id) => ANIMALS.find((a) => a.id === id);
-const PHOTO_W = 810, PHOTO_H = 1080;       // 3:4
+const PHOTO_W = 810, PHOTO_H = 1080;
+const STAMP_H = 200;                         // 照片底部名牌条高度
+const FLOOR_POSES = new Set(['frog', 'dog', 'crocodile']); // 人在画面下方的动作
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+// 侦测到的骨架 → 人的范围中心（0–1，原始镜头座标）；没有或太旧就回 null
+function personBox(lm, fresh) {
+  if (!lm || !fresh) return null;
+  const pts = lm.filter((p) => p && (p.visibility ?? 1) > 0.3);
+  if (pts.length < 6) return null;
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  return { cx: (Math.min(...xs) + Math.max(...xs)) / 2, cy: (Math.min(...ys) + Math.max(...ys)) / 2 };
+}       // 3:4
 const COUNTDOWN_S = 10;
 const SLOW_FPS = 5, SLOW_WINDOW_MS = 4000;  // 连续 4 秒 fps < 5 → 改倒数拍
 const F_KAI = "'LXGW WenKai Screen','Kaiti SC','STKaiti',serif";
@@ -410,7 +421,7 @@ async function startCamera() {
   requestAnimationFrame(fitInsets);
   stopCamera();
   const tok = ++cam.token;
-  cam.capturing = false; cam.progress = 0; cam.smoother.reset(); cam.posSm.reset(); Ann.reset(); cam.frames = []; cam.slowSince = 0;
+  cam.capturing = false; cam.progress = 0; cam.smoother.reset(); cam.posSm.reset(); Ann.reset(); cam.frames = []; cam.slowSince = 0; cam.lastLm = null;
   const loading = $('#loading'); loading.hidden = false; loading.textContent = '正在打开摄像头…';
   let stream;
   try {
@@ -504,6 +515,7 @@ function loop(now) {
     if (cam.slowSince && now - cam.slowSince >= SLOW_WINDOW_MS) { switchToTimer('手机有点慢，改用倒数拍'); return; }
   }
   const lm = res && res.landmarks && res.landmarks[0];
+  if (lm) { cam.lastLm = lm; cam.lastLmT = now; } // 拍照时用来把人放在照片中间
   const fps = cam.frames.length / Math.max(1, Math.min(SLOW_WINDOW_MS, now - cam.started) / 1000);
   if (cam.view === 'pos') { const r0 = checkPosition(lm, video.videoWidth, video.videoHeight); dbgUpdate(lm, video, now, r0, fps); applyPos(r0, now); return; }
   const r = lm ? classify(S.cur, lm, { aspect: video.videoWidth / video.videoHeight }) : { ok: false, hint: FAR_HINT };
@@ -604,6 +616,16 @@ async function capture(kind) {
     const vw = v.videoWidth, vh = v.videoHeight, target = PHOTO_W / PHOTO_H;
     let sw = vw, sh = vh, sx = 0, sy = 0;
     if (vw / vh > target) { sw = vh * target; sx = (vw - sw) / 2; } else { sh = vw / target; sy = (vh - sh) / 2; }
+    // 照片是 3:4，镜头是 9:16，上下（或左右）一定要裁掉一部分。以前固定裁中间，趴在地上的动作人在画面下方，
+    // 会被裁掉，又被底部的名牌条盖住（老师 iPhone 实测鳄鱼撑地）。改成以人的位置来裁：人放在名牌条以上那块的中间。
+    const box = personBox(cam.lastLm, performance.now() - (cam.lastLmT || 0) < 1500);
+    const visH = (PHOTO_H - STAMP_H) / PHOTO_H; // 名牌条以上可见的比例
+    if (box) {
+      sy = clamp(box.cy * vh - sh * visH / 2, 0, vh - sh);
+      sx = clamp(box.cx * vw - sw / 2, 0, vw - sw);
+    } else if (FLOOR_POSES.has(a.id)) {
+      sy = vh - sh; // 倒数拍没有骨架：地上的动作留下面、裁上面
+    }
     ctx.save(); ctx.translate(PHOTO_W, 0); ctx.scale(-1, 1);
     ctx.drawImage(v, sx, sy, sw, sh, 0, 0, PHOTO_W, PHOTO_H);
     ctx.restore();
@@ -623,7 +645,7 @@ async function capture(kind) {
 }
 
 function drawStamp(ctx, a, kind) {
-  const barH = 200, y0 = PHOTO_H - barH;
+  const barH = STAMP_H, y0 = PHOTO_H - barH;
   ctx.fillStyle = C.mist; ctx.fillRect(0, y0, PHOTO_W, barH);
   ctx.fillStyle = C.leaf; ctx.fillRect(0, y0, PHOTO_W, 8);
   // 动物小图贴纸
